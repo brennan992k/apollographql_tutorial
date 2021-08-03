@@ -8,6 +8,7 @@ import Profile from './profile';
 import { Footer, PageContainer } from '../components';
 
 export default function Pages() {
+  
   return (
     <Fragment>
       <PageContainer>
