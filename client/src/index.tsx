@@ -3,14 +3,42 @@ import {
   NormalizedCacheObject,
   ApolloProvider,
   gql,
-  useQuery
+  useQuery,
 } from "@apollo/client";
 import { cache } from "./cache";
 import React from "react";
 import ReactDOM from "react-dom";
 import Pages from "./pages";
 import injectStyles from "./styles";
-import Login from './pages/login';
+import Login from "./pages/login";
+import { split, HttpLink } from "@apollo/client";
+import { getMainDefinition } from "@apollo/client/utilities";
+import { WebSocketLink } from "@apollo/client/link/ws";
+const wsLink = new WebSocketLink({
+  uri: "ws://localhost:4000/subscriptions",
+  options: {
+    reconnect: true,
+  },
+});
+
+const httpLink = new HttpLink({
+  uri: "http://localhost:4000/graphql",
+  headers: {
+    authorization: localStorage.getItem("token") || "",
+  },
+});
+
+const splitLink = split(
+  ({ query }) => {
+    const definition = getMainDefinition(query);
+    return (
+      definition.kind === "OperationDefinition" &&
+      definition.operation === "subscription"
+    );
+  },
+  wsLink,
+  httpLink
+);
 
 export const typeDefs = gql`
   extend type Query {
@@ -22,10 +50,7 @@ export const typeDefs = gql`
 // Initialize ApolloClient
 const client: ApolloClient<NormalizedCacheObject> = new ApolloClient({
   cache,
-  uri: "http://localhost:4000/graphql",
-  headers: {
-    authorization: localStorage.getItem("token") || "",
-  },
+  link: splitLink,
   typeDefs,
 });
 
@@ -42,11 +67,10 @@ function IsLoggedIn() {
   return data.isLoggedIn ? <Pages /> : <Login />;
 }
 
-
 // Pass the ApolloClient instance to the ApolloProvider component
 ReactDOM.render(
   <ApolloProvider client={client}>
-     <IsLoggedIn />
+    <IsLoggedIn />
   </ApolloProvider>,
   document.getElementById("root")
 );

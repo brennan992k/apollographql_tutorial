@@ -1,4 +1,5 @@
 const { paginateResults } = require("./utils");
+const pubSub = require("./pubSub");
 module.exports = {
   Query: {
     launches: async (_, { pageSize = 20, after }, { dataSources }) => {
@@ -22,10 +23,17 @@ module.exports = {
       dataSources.launchAPI.getLaunchById({ launchId: id }),
     me: (_, __, { dataSources }) => dataSources.userAPI.findOrCreateUser(),
   },
+  Subscription: {
+    logined: {
+      subscribe: () => pubSub.asyncIterator(["logined"]),
+      resolve: (payload, args, context, info) => payload,
+    },
+  },
   Mutation: {
     login: async (_, { email }, { dataSources }) => {
       const user = await dataSources.userAPI.findOrCreateUser({ email });
       if (user) {
+        dataSources.pubSub.publish("logined", user);
         user.token = Buffer.from(email).toString("base64");
         return user;
       }

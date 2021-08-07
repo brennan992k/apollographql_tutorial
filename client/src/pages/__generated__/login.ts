@@ -20,3 +20,7 @@ export interface Login {
 export interface LoginVariables {
   email: string;
 }
+
+export interface Logined {
+  logined: Login_login;
+}

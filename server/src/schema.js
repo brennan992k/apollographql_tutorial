@@ -13,6 +13,10 @@ const typeDefs = gql`
     launches: [Launch]!
   }
 
+  type Subscription {
+    logined: User
+  }
+
   type Mutation {
     bookTrips(launchIds: [ID]!): TripUpdateResponse!
     cancelTrip(launchId: ID!): TripUpdateResponse!
